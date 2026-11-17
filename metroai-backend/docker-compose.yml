@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: metroai_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-metroai_db}
+      POSTGRES_USER: ${POSTGRES_USER:-metroai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Please set POSTGRES_PASSWORD in your environment}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-metroai} -d ${POSTGRES_DB:-metroai_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend Service (Reads secrets from .env)
+  backend:
+    build: .
+    container_name: metroai_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-metroai}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-metroai_db}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@delhimetrorail.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
