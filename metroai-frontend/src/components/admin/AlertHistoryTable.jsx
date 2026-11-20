@@ -48,7 +48,7 @@ export default function AlertHistoryTable({ onSelectStation }) {
   return (
     <div className="flex flex-col gap-4">
       {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E293B]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="flex items-center gap-3 flex-1 max-w-md">
           <div className="relative w-full">
             <Search
@@ -61,14 +61,14 @@ export default function AlertHistoryTable({ onSelectStation }) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter logged alerts by station or ID..."
-              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-cyan-500"
+              className="w-full pl-9 pr-3 py-2 text-xs rounded-xl border border-[#1F2A25] dark:border-[#1F2A25] bg-slate-50 dark:bg-slate-900/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-hidden focus:ring-1 focus:ring-cyan-500"
             />
           </div>
 
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value)}
-            className="px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-200 focus:outline-hidden cursor-pointer"
+            className="px-3 py-2 text-xs rounded-xl border border-[#1F2A25] dark:border-[#1F2A25] bg-slate-50 dark:bg-slate-900/50 text-slate-800 dark:text-slate-200 focus:outline-hidden cursor-pointer"
           >
             <option value="ALL">All Risk Levels</option>
             <option value="CRITICAL">Critical Only</option>
@@ -82,7 +82,7 @@ export default function AlertHistoryTable({ onSelectStation }) {
           type="button"
           onClick={loadHistory}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border border-[#1F2A25] dark:border-[#1F2A25] bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors cursor-pointer"
         >
           <RefreshCw size={13} strokeWidth={1.75} className={loading ? 'animate-spin' : ''} />
           <span>Refresh Database Logs</span>
@@ -90,12 +90,12 @@ export default function AlertHistoryTable({ onSelectStation }) {
       </div>
 
       {/* Main Table Card */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E293B] overflow-hidden shadow-xs">
+      <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
         {loading ? (
           <div className="p-6 space-y-3">
-            <LoadingSkeleton width="100%" height="45px" className="rounded-xl" />
-            <LoadingSkeleton width="100%" height="45px" className="rounded-xl" />
-            <LoadingSkeleton width="100%" height="45px" className="rounded-xl" />
+            <LoadingSkeleton width="100%" height="45px" className="rounded-lg" />
+            <LoadingSkeleton width="100%" height="45px" className="rounded-lg" />
+            <LoadingSkeleton width="100%" height="45px" className="rounded-lg" />
           </div>
         ) : error ? (
           <div className="p-8 text-center text-red-600 dark:text-red-400 text-sm">
@@ -173,7 +173,7 @@ export default function AlertHistoryTable({ onSelectStation }) {
                           <button
                             type="button"
                             onClick={() => onSelectStation(log.station_id)}
-                            className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 hover:bg-cyan-50 dark:hover:bg-cyan-950/40 transition-colors cursor-pointer"
+                            className="px-2.5 py-1 rounded-md text-[11px] font-semibold text-[#059669] dark:text-[#059669] hover:bg-cyan-50 dark:hover:bg-cyan-950/40 transition-colors cursor-pointer"
                           >
                             Inspect Station
                           </button>

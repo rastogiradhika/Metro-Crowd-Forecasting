@@ -55,12 +55,12 @@ export default function StationSelector({
       <div className="flex items-center justify-between text-xs font-semibold tracking-wider text-slate-700 dark:text-slate-300 uppercase">
         <div className="flex items-center gap-2">
           {badgeType === 'origin' && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-[#1F2A25] dark:border-[#1F2A25]">
               ORIGIN
             </span>
           )}
           {badgeType === 'dest' && (
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-[#1F2A25] dark:border-[#1F2A25]">
               DESTINATION
             </span>
           )}
@@ -79,8 +79,8 @@ export default function StationSelector({
         aria-label={`${label}: ${selectedStation ? selectedStation.name : placeholder}`}
         className={`w-full flex items-center justify-between gap-3 px-4 py-2.5 rounded-lg border text-left transition-colors duration-150 ${
           isOpen
-            ? 'border-cyan-500 ring-1 ring-cyan-500 bg-white dark:bg-slate-800'
-            : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
+            ? 'border-[#059669] ring-1 ring-cyan-500 bg-white dark:bg-slate-800'
+            : 'border-[#1F2A25] dark:border-[#1F2A25] bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -119,16 +119,16 @@ export default function StationSelector({
           size={16}
           strokeWidth={1.75}
           className={`shrink-0 text-slate-400 transition-transform duration-150 ${
-            isOpen ? 'rotate-180 text-cyan-600' : ''
+            isOpen ? 'rotate-180 text-[#059669]' : ''
           }`}
         />
       </button>
 
       {/* Dropdown Menu - 1px border, 8px radius */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden flex flex-col max-h-72">
+        <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-slate-800 border border-[#1F2A25] dark:border-[#1F2A25] rounded-lg shadow-lg overflow-hidden flex flex-col max-h-72">
           {/* Search Input Bar */}
-          <div className="p-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex items-center gap-2">
+          <div className="p-2 border-b border-[#1F2A25] dark:border-[#1F2A25] bg-slate-50 dark:bg-slate-900/50 flex items-center gap-2">
             <Search size={15} strokeWidth={1.75} className="text-slate-400 shrink-0 ml-1" />
             <input
               id="station-search-input"
@@ -187,7 +187,7 @@ export default function StationSelector({
                     </div>
 
                     {isSelected && (
-                      <Check size={16} strokeWidth={1.75} className="text-cyan-600 dark:text-cyan-400 shrink-0 ml-2" />
+                      <Check size={16} strokeWidth={1.75} className="text-[#059669] dark:text-[#059669] shrink-0 ml-2" />
                     )}
                   </button>
                 );

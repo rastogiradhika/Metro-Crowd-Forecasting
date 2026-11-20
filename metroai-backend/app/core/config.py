@@ -33,15 +33,21 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     COOKIE_NAME: str = "access_token"
 
-    # Admin Provisioning Credentials (Read strictly from environment; no hardcoded fallback)
+    # Admin & Operator Provisioning Credentials (Read strictly from environment; NO hardcoded fallback)
     ADMIN_EMAIL: Optional[str] = Field(default=None, description="Initial admin email for provisioning")
     ADMIN_PASSWORD: Optional[str] = Field(default=None, description="Initial admin password for provisioning")
+    OPERATOR_EMAIL: Optional[str] = Field(default=None, description="Initial operator email for provisioning")
+    OPERATOR_PASSWORD: Optional[str] = Field(default=None, description="Initial operator password for provisioning")
 
     # CORS Allowed Origins (Read strictly from environment if set, parsed from comma-separated string)
     CORS_ORIGINS: Union[List[str], str] = Field(
         default_factory=lambda: [
             "http://localhost:5173",
             "http://127.0.0.1:5173",
+            "http://localhost:5174",
+            "http://127.0.0.1:5174",
+            "http://localhost:5175",
+            "http://127.0.0.1:5175",
             "http://localhost:3000",
             "https://metroai.vercel.app",
         ]

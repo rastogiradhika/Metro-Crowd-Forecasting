@@ -3,27 +3,23 @@ import LoadingSkeleton from '../common/LoadingSkeleton';
 
 export default function PassengerSkeleton() {
   return (
-    <div className="w-full bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm transition-colors duration-200">
-      <div className="flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800 mb-6">
-        <LoadingSkeleton width="200px" height="24px" className="rounded-md" />
-        <LoadingSkeleton width="120px" height="24px" className="rounded-full" />
+    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 space-y-6 transition-colors duration-200">
+      <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+        <LoadingSkeleton width="180px" height="20px" className="rounded-md" />
+        <LoadingSkeleton width="100px" height="20px" className="rounded-md" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Left Side: Source */}
-        <div className="flex flex-col gap-4">
-          <LoadingSkeleton width="140px" height="18px" className="rounded-md" />
-          <LoadingSkeleton width="220px" height="32px" className="rounded-md" />
-          <LoadingSkeleton width="100%" height="90px" className="rounded-lg" />
-          <LoadingSkeleton width="100%" height="60px" className="rounded-lg" />
+      <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
+        <div className="p-4 space-y-4">
+          <LoadingSkeleton width="120px" height="16px" className="rounded-md" />
+          <LoadingSkeleton width="200px" height="28px" className="rounded-md" />
+          <LoadingSkeleton width="100%" height="80px" className="rounded-lg" />
         </div>
 
-        {/* Right Side: Destination & Advisory */}
-        <div className="flex flex-col gap-4">
-          <LoadingSkeleton width="140px" height="18px" className="rounded-md" />
-          <LoadingSkeleton width="220px" height="32px" className="rounded-md" />
-          <LoadingSkeleton width="100%" height="90px" className="rounded-lg" />
-          <LoadingSkeleton width="100%" height="60px" className="rounded-lg" />
+        <div className="p-4 space-y-4">
+          <LoadingSkeleton width="120px" height="16px" className="rounded-md" />
+          <LoadingSkeleton width="200px" height="28px" className="rounded-md" />
+          <LoadingSkeleton width="100%" height="80px" className="rounded-lg" />
         </div>
       </div>
     </div>

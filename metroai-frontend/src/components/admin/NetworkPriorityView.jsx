@@ -15,7 +15,7 @@ export default function NetworkPriorityView({
   const lineColor = LINE_COLORS[selectedLine] || '#EAB308';
 
   return (
-    <div className="w-full bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm transition-colors duration-200">
+    <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-6 shadow-xs transition-colors duration-200">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-200 dark:border-slate-800 mb-6">
         <div>
           <h3 className="text-base font-bold text-slate-900 dark:text-white">
@@ -66,8 +66,8 @@ export default function NetworkPriorityView({
               onClick={() => onSelectStation(station.station_id)}
               className={`p-3 rounded-xl border cursor-pointer transition-all duration-150 flex flex-col justify-between gap-2 ${
                 isSelected
-                  ? 'border-cyan-500 ring-2 ring-cyan-500/30 bg-cyan-50/40 dark:bg-cyan-950/20'
-                  : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 hover:border-slate-300 dark:hover:border-slate-700'
+                  ? 'border-[#059669] ring-2 ring-cyan-500/30 bg-cyan-50/40 dark:bg-cyan-950/20'
+                  : 'border-[#1F2A25] dark:border-[#1F2A25] bg-slate-50/50 dark:bg-[#050807]/40 hover:border-slate-300 dark:hover:border-[#1F2A25]'
               }`}
             >
               <div className="flex items-start justify-between gap-1.5">
@@ -82,7 +82,7 @@ export default function NetworkPriorityView({
               </div>
 
               <div className="flex items-baseline justify-between text-xs">
-                <span className="text-slate-400 text-[11px]">Inflow</span>
+                <span className="text-slate-400 text-[11px]">Expected Crowd</span>
                 <span className="font-bold tabular-nums" style={{ color: risk.color }}>
                   {formatNumber(station.predicted_inflow)}
                 </span>

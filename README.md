@@ -257,12 +257,15 @@ ALL TESTS COMPLETED: 11/11 PASSED (100% SUCCESS RATE)
 
 ---
 
-### 🔑 Operations Credentials
+### 🔑 Operations Credentials & Security Policy
 
-| Role | Email | Password |
-| :--- | :--- | :--- |
-| **DMRC Operations Administrator** | Configured via `ADMIN_EMAIL` (`admin@delhimetrorail.com`) | Configured via `ADMIN_PASSWORD` environment variable (set in `.env`) |
-| **Commuter Passenger** | *Register any email via `/auth/register`* | *Custom password (min 6 chars)* |
+> **Zero Hardcoded Credentials Policy**: All operations staff credentials (`ADMIN_EMAIL`, `ADMIN_PASSWORD`, `OPERATOR_EMAIL`, `OPERATOR_PASSWORD`) must be configured strictly through environment variables (`.env`). No default fallback passwords exist in the application source code. If environment credentials are omitted on launch, automatic account seeding is bypassed.
+
+| Role | Email | Password Source | Authentication Transport |
+| :--- | :--- | :--- | :--- |
+| **DMRC Operations Administrator** | Configured via `ADMIN_EMAIL` (`admin@delhimetrorail.com`) | Configured via `ADMIN_PASSWORD` in `.env` | Secure `HttpOnly; SameSite=Lax` Cookie |
+| **DMRC Station Operator** | Configured via `OPERATOR_EMAIL` (`operator@delhimetrorail.com`) | Configured via `OPERATOR_PASSWORD` in `.env` | Secure `HttpOnly; SameSite=Lax` Cookie |
+| **Commuter Passenger** | *No account required (public journey planner)* | *N/A* | *N/A* |
 
 ---
 

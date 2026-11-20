@@ -10,6 +10,7 @@ import StationTable from '../components/admin/StationTable';
 import StationDrawer from '../components/admin/StationDrawer';
 import NetworkPriorityView from '../components/admin/NetworkPriorityView';
 import AlertHistoryTable from '../components/admin/AlertHistoryTable';
+import DataNotice from '../components/common/DataNotice';
 import { formatISODate } from '../utils/formatters';
 import { Clock, Shield, AlertCircle, LayoutGrid, Table, BellRing, ArrowRight, History } from 'lucide-react';
 
@@ -33,14 +34,14 @@ export default function AdminDashboard() {
       setLoading(true);
       setError(null);
       try {
-        const data = await fetchAdminForecast(horizon);
+        const data = await fetchAdminForecast(horizon, controller.signal);
         if (!controller.signal.aborted) {
           setAdminData(data);
         }
       } catch (err) {
         if (!controller.signal.aborted) {
           console.error('Failed to load operations forecast:', err);
-          setError('Unable to retrieve network forecast. Please try again.');
+          setError('Unable to retrieve network forecast. Please verify backend connection.');
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -49,10 +50,11 @@ export default function AdminDashboard() {
       }
     }
     loadData();
+
     return () => controller.abort();
   }, [horizon]);
 
-  // Load Station Drawer Data when station is selected (with AbortController to prevent race conditions)
+  // Load Station Drawer Data when selectedStationId or horizon changes
   useEffect(() => {
     if (!selectedStationId) {
       setDrawerData(null);
@@ -66,8 +68,8 @@ export default function AdminDashboard() {
       setDrawerLoading(true);
       try {
         const [stForecast, stExplain] = await Promise.all([
-          fetchStationForecast(selectedStationId, horizon),
-          fetchStationExplanation(selectedStationId, horizon).catch(() => ({ available: false, message: 'Attribution analysis unavailable' })),
+          fetchStationForecast(selectedStationId, horizon, controller.signal),
+          fetchStationExplanation(selectedStationId, horizon, controller.signal).catch(() => ({ available: false, message: 'Reason for prediction (AI) currently unavailable' })),
         ]);
         if (!controller.signal.aborted) {
           setDrawerData(stForecast);
@@ -91,80 +93,83 @@ export default function AdminDashboard() {
   const activeAlert = adminData?.active_predictive_alert;
 
   return (
-    <div className="w-full min-h-screen py-10 sm:py-14 transition-colors duration-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col gap-8">
-        {/* Header / Operations Bar (32px section gap) */}
+    <div className="w-full min-h-screen py-8 sm:py-12 bg-slate-50 dark:bg-[#090D11] text-slate-900 dark:text-slate-100 transition-colors">
+      <div className="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+        {/* Header / Operations Bar */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex flex-col gap-2">
+          <div className="space-y-1.5">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold uppercase tracking-wider bg-slate-200/70 dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[11px] font-mono font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
                 <Shield size={12} strokeWidth={1.75} />
                 <span>DMRC Operations Center</span>
               </span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-              Network Inflow Operations
+            <h1 className="text-2xl sm:text-3xl font-bold font-display text-slate-900 dark:text-white tracking-tight">
+              Crowd Management Dashboard
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400 max-w-2xl leading-relaxed">
-              System-wide passenger inflow predictions across 262 Delhi Metro stations for preemptive dispatch and gate management.
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-2xl leading-relaxed">
+              System-wide expected crowd predictions across 262 Delhi Metro stations for preemptive dispatch and gate management.
             </p>
           </div>
 
-          {/* Time & Horizon Controls */}
+          {/* Time & Forecast Horizon Controls */}
           <div className="flex flex-col items-start md:items-end gap-2 shrink-0">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Horizon
+              <span className="text-[11px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold">
+                Forecast Time
               </span>
-              <div className="flex items-center p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+              <div className="flex items-center p-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
                 {[10, 20, 30].map((h) => (
                   <button
                     key={h}
                     type="button"
                     onClick={() => setHorizon(h)}
-                    className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors cursor-pointer ${
+                    className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                       horizon === h
-                        ? 'bg-[#0F172A] text-white dark:bg-cyan-600 shadow-xs'
+                        ? 'bg-emerald-600 text-white shadow-xs'
                         : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
-                    +{h} min
+                    Next {h} mins
                   </button>
                 ))}
               </div>
             </div>
 
             {adminData?.updated_at && (
-              <div className="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+              <div className="flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-slate-400 tabular-nums">
                 <Clock size={12} strokeWidth={1.75} />
-                <span>Updated: {formatISODate(adminData.updated_at)}</span>
+                <span>UPDATED: {formatISODate(adminData.updated_at)}</span>
               </div>
             )}
           </div>
         </div>
 
-        {/* Proactive Predictive Alert Box */}
+        {/* AI Disclaimer / Model Mode Notice */}
+        <DataNotice meta={adminData?.meta} />
+
+        {/* 🚨 HIGH CROWD ALERT BANNER */}
         {activeAlert && (
           <div
             onClick={() => setSelectedStationId(activeAlert.station_id)}
-            className="w-full p-4 sm:p-5 rounded-2xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 text-red-900 dark:text-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:bg-red-100/60 dark:hover:bg-red-950/30 transition-colors shadow-xs"
+            className="w-full p-4 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 text-red-800 dark:text-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer hover:bg-red-100/70 dark:hover:bg-red-950/30 transition-colors shadow-xs"
           >
-            <div className="flex items-start gap-4">
-              <div className="p-2 rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 shrink-0">
-                <BellRing size={20} strokeWidth={1.75} />
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 shrink-0">
+                <BellRing size={18} strokeWidth={1.75} />
               </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400">
-                  Proactive Predictive Alert (+{activeAlert.horizon_minutes}m)
+              <div className="space-y-0.5">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-red-700 dark:text-red-400">
+                  HIGH CROWD ALERT (Next {activeAlert.horizon_minutes || horizon} Mins)
                 </span>
-                <p className="text-sm font-medium leading-relaxed">
-                  {activeAlert.text}
+                <p className="text-xs leading-relaxed text-red-900 dark:text-red-100 font-medium">
+                  Around <strong>{activeAlert.predicted_inflow} people</strong> are expected entering at <strong>{activeAlert.station_name}</strong>. Open extra gates to manage rush.
                 </p>
               </div>
             </div>
 
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold shrink-0 hover:bg-red-700 transition-colors">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors shrink-0">
               <span>Inspect Station</span>
               <ArrowRight size={13} strokeWidth={1.75} />
             </div>
@@ -173,9 +178,24 @@ export default function AdminDashboard() {
 
         {/* Error Handling */}
         {error && (
-          <div className="p-4 sm:p-6 rounded-2xl border border-red-200 bg-red-50 text-red-800 text-sm flex items-center gap-3">
-            <AlertCircle size={18} strokeWidth={1.75} className="shrink-0" />
+          <div className="p-4 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300 text-xs flex items-center gap-2.5">
+            <AlertCircle size={16} strokeWidth={1.75} className="shrink-0 text-red-600" />
             <span>{error}</span>
+          </div>
+        )}
+
+        {/* Loading State for initial batch prediction */}
+        {loading && !adminData && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="p-4 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse h-24" />
+              ))}
+            </div>
+            <div className="p-8 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-pulse h-64 flex flex-col items-center justify-center gap-3 text-slate-500">
+              <div className="w-7 h-7 rounded-full border-2 border-emerald-600 border-t-transparent animate-spin" />
+              <span className="text-xs font-mono">Forecasting crowd levels across all 262 DMRC stations (Next {horizon} mins)...</span>
+            </div>
           </div>
         )}
 
@@ -188,7 +208,7 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* Priority 5 Alerts */}
+        {/* Top 5 Busiest Stations */}
         {adminData?.priority_alerts && (
           <PriorityAlerts
             alerts={adminData.priority_alerts}
@@ -196,15 +216,15 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* View Switcher Tabs */}
-        <div className="flex items-center justify-between gap-4 pt-2">
-          <div className="flex items-center p-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E293B]">
+        {/* View Switcher Tabs (Flat Segmented Control) */}
+        <div className="flex items-center justify-between gap-4 pt-1">
+          <div className="flex items-center p-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
             <button
               type="button"
               onClick={() => setActiveView('table')}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                 activeView === 'table'
-                  ? 'bg-[#0F172A] text-white dark:bg-cyan-600 shadow-xs'
+                  ? 'bg-slate-900 text-white dark:bg-emerald-600 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -214,9 +234,9 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => setActiveView('schematic')}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                 activeView === 'schematic'
-                  ? 'bg-[#0F172A] text-white dark:bg-cyan-600 shadow-xs'
+                  ? 'bg-slate-900 text-white dark:bg-emerald-600 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -226,54 +246,48 @@ export default function AdminDashboard() {
             <button
               type="button"
               onClick={() => setActiveView('history')}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors cursor-pointer ${
                 activeView === 'history'
-                  ? 'bg-[#0F172A] text-white dark:bg-cyan-600 shadow-xs'
+                  ? 'bg-slate-900 text-white dark:bg-emerald-600 shadow-xs'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <History size={14} strokeWidth={1.75} />
-              <span>Alert History Logs</span>
+              <span>Past Staff Alerts</span>
             </button>
           </div>
         </div>
 
-        {/* 262 Stations Table View */}
-        {activeView === 'table' && adminData?.forecasts && (
+        {/* Main Content Area */}
+        {activeView === 'table' && (
           <StationTable
-            forecasts={adminData.forecasts}
-            selectedStationId={selectedStationId}
+            forecasts={adminData?.forecasts || []}
             onSelectStation={(id) => setSelectedStationId(id)}
+            selectedStationId={selectedStationId}
           />
         )}
 
-        {/* Network Priority Schematic View */}
-        {activeView === 'schematic' && adminData?.forecasts && (
+        {activeView === 'schematic' && (
           <NetworkPriorityView
-            forecasts={adminData.forecasts}
+            forecasts={adminData?.forecasts || []}
+            onSelectStation={(id) => setSelectedStationId(id)}
             selectedStationId={selectedStationId}
-            onSelectStation={(id) => setSelectedStationId(id)}
           />
         )}
 
-        {/* Historical Alert Logs View */}
         {activeView === 'history' && (
-          <AlertHistoryTable
-            onSelectStation={(id) => setSelectedStationId(id)}
-          />
-        )}
-
-        {/* Station Drilldown Drawer */}
-        {selectedStationId && (
-          <StationDrawer
-            stationId={selectedStationId}
-            onClose={() => setSelectedStationId(null)}
-            data={drawerData}
-            loading={drawerLoading}
-            explanation={drawerExplanation}
-          />
+          <AlertHistoryTable onSelectStation={(id) => setSelectedStationId(id)} />
         )}
       </div>
+
+      {/* Station Drilldown Drawer */}
+      <StationDrawer
+        stationId={selectedStationId}
+        onClose={() => setSelectedStationId(null)}
+        data={drawerData}
+        loading={drawerLoading}
+        explanation={drawerExplanation}
+      />
     </div>
   );
 }

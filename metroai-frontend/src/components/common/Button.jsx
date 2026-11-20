@@ -16,11 +16,11 @@ export default function Button({
 }) {
   const variantStyles = {
     primary:
-      'bg-[#0F172A] hover:bg-slate-800 text-white dark:bg-cyan-600 dark:hover:bg-cyan-500 border border-transparent shadow-xs',
+      'bg-[#0B100E] hover:bg-slate-800 text-white dark:bg-[#059669] dark:hover:bg-[#059669] border border-transparent shadow-xs',
     secondary:
-      'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700',
+      'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 border border-[#1F2A25] dark:border-[#1F2A25]',
     outline:
-      'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700',
+      'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-[#1F2A25]',
     ghost:
       'bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 border border-transparent',
     danger:

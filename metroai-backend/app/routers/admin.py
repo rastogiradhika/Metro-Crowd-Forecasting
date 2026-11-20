@@ -140,7 +140,7 @@ def get_admin_dashboard(
             station_id=top_alert.station_id,
             station_name=top_alert.station_name,
             horizon_minutes=horizon,
-            text=f"Predicted inflow of {top_alert.predicted_inflow} pax entering at {top_alert.station_name} within +{horizon} minutes. Recommended to activate crowd diversion gates."
+            text=f"Around {top_alert.predicted_inflow:,} people are expected at {top_alert.station_name}. Open extra gates to manage rush."
         )
 
     summary_kpi = NetworkSummaryKPI(
@@ -167,17 +167,16 @@ def get_admin_dashboard(
 def get_station_drilldown(
     station_id: int,
     horizon: int = Query(20),
-    db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin)
+    db: Session = Depends(get_db)
 ):
-    """Station detail drilldown: provides forecast series, 24-hr hourly curve, and train status."""
+    """Station detail drilldown: provides forecast series, 24-hr hourly curve, and train status (publicly readable)."""
     if horizon not in (10, 20, 30):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid horizon. Allowed values are 10, 20, or 30."
         )
 
-    st = db.query(Station).filter((Station.station_id == station_id) | (Station.id == station_id)).first()
+    st = db.query(Station).filter(Station.station_id == station_id).first()
     if not st:
         raise HTTPException(status_code=404, detail="Station not found")
 
@@ -194,14 +193,19 @@ def get_station_drilldown(
             "isCurrent": h == now.hour
         })
 
+    gates = st.gates if st.gates and st.gates > 0 else (8 if st.interchange else 4)
+    lifts = st.lifts if st.lifts and st.lifts > 0 else (6 if st.interchange else 3)
+    platforms = st.platforms if st.platforms and st.platforms > 0 else (4 if st.interchange else 2)
+    concourses = st.concourses if st.concourses and st.concourses > 0 else (3 if st.interchange else 2)
+
     return {
         "station_id": st.station_id,
         "station_name": st.name,
         "line": st.line,
-        "gates": st.gates,
-        "lifts": st.lifts,
-        "platforms": st.platforms,
-        "concourses": st.concourses,
+        "gates": gates,
+        "lifts": lifts,
+        "platforms": platforms,
+        "concourses": concourses,
         "interchange": st.interchange,
         "forecast_series": [
             {"horizon": 10, "predicted_inflow": pred["inflow_10m"], "risk_level": pred["risk_10m"]},
@@ -224,8 +228,7 @@ def get_station_drilldown(
 def get_station_explanation(
     station_id: int,
     horizon: int = Query(20),
-    db: Session = Depends(get_db),
-    admin_user: User = Depends(get_current_admin)
+    db: Session = Depends(get_db)
 ):
     """
     Feature attribution explanation endpoint.
@@ -238,16 +241,12 @@ def get_station_explanation(
             detail="Invalid horizon. Allowed values are 10, 20, or 30."
         )
 
-    st = db.query(Station).filter((Station.station_id == station_id) | (Station.id == station_id)).first()
+    st = db.query(Station).filter(Station.station_id == station_id).first()
     if not st:
         raise HTTPException(status_code=404, detail="Station not found")
 
-    return {
-        "station_id": station_id,
-        "available": False,
-        "message": "Explanation not available",
-        "factors": []
-    }
+    explanation = ml_service.explain(st.station_id, horizon)
+    return explanation
 
 
 @router.get("/admin/alerts/history")

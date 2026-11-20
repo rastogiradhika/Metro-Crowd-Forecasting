@@ -1,290 +1,261 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Clock,
-  DoorOpen,
-  ArrowRight,
-  Lightbulb,
-  CheckCircle2,
-} from 'lucide-react';
+import React from 'react';
+import { Clock, Info, CheckCircle2, AlertTriangle, AlertCircle } from 'lucide-react';
 import JourneyTimeline from './JourneyTimeline';
-import { getRiskConfig } from '../../utils/risk';
-import { formatNumber, formatTime } from '../../utils/formatters';
+import DataNotice from '../common/DataNotice';
 
-export default function ForecastResult({
-  result,
-  onApplyOffset,
-  travelTime,
-}) {
-  // Live timestamp (Hooks are called unconditionally at the top)
-  const [formattedTime, setFormattedTime] = useState('');
-  useEffect(() => {
-    if (!result) return;
-    const now = new Date();
-    setFormattedTime(
-      now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    );
-  }, [result]);
+function getCrowdStatus(riskLevel) {
+  const normalized = (riskLevel || 'LOW').toUpperCase();
+  switch (normalized) {
+    case 'LOW':
+      return {
+        label: 'Low Crowd (Comfortable)',
+        lightBadge: 'bg-emerald-50 border-emerald-200 text-emerald-800',
+        darkBadge: 'dark:bg-emerald-950/40 dark:border-emerald-800/60 dark:text-emerald-300',
+        textColor: '#059669',
+        icon: CheckCircle2,
+      };
+    case 'MODERATE':
+      return {
+        label: 'Moderate Crowd',
+        lightBadge: 'bg-amber-50 border-amber-200 text-amber-800',
+        darkBadge: 'dark:bg-amber-950/40 dark:border-amber-800/60 dark:text-amber-300',
+        textColor: '#D97706',
+        icon: AlertTriangle,
+      };
+    case 'HIGH':
+    case 'CRITICAL':
+      return {
+        label: 'High Crowd',
+        lightBadge: 'bg-red-50 border-red-200 text-red-800',
+        darkBadge: 'dark:bg-red-950/40 dark:border-red-800/60 dark:text-red-300',
+        textColor: '#DC2626',
+        icon: AlertCircle,
+      };
+    default:
+      return {
+        label: 'Comfortable',
+        lightBadge: 'bg-slate-50 border-slate-200 text-slate-700',
+        darkBadge: 'dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300',
+        textColor: '#64748B',
+        icon: Info,
+      };
+  }
+}
 
-  // Early return placed AFTER all hooks
+export default function ForecastResult({ result, onApplyOffset, travelTime }) {
   if (!result) return null;
 
-  const { origin, destination, route, advisory } = result;
-  const originRisk = getRiskConfig(origin.risk_level);
-  const destRisk = getRiskConfig(destination.risk_level);
-
-  // Honest data: do not fabricate numbers if series is not returned
-  const series = origin.horizon_series || null;
+  const { origin, destination, advisory } = result;
+  const originStatus = getCrowdStatus(origin?.risk_level);
+  const destStatus = getCrowdStatus(destination?.risk_level);
+  const shiftOffset = advisory?.suggest_time_offset || 15;
 
   return (
-    <div className="flex flex-col gap-8 w-full">
-      {/* SINGLE UNIFIED RESULT CARD WITH 1PX DIVIDERS (NO NESTED CARDS) */}
-      <div className="w-full bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-sm overflow-hidden transition-colors duration-200">
-        {/* Top Success Header Bar with Green Accent */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/50 flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-              <CheckCircle2 size={15} strokeWidth={2} />
+    <div className="space-y-6">
+      {/* ── 0. AI MODEL DISCLAIMER ───────────────────────────────────────── */}
+      <DataNotice meta={result?.meta || origin?.meta} />
+
+      {/* ── 1. ACTIONABLE TRAVEL ADVISORY ─────────────────────────────────── */}
+      {advisory && (
+        <div className="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0F172A] flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition-colors">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-emerald-400 shrink-0 mt-0.5">
+              <Info size={18} strokeWidth={1.75} />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-                Forecast Ready
-              </span>
-              <span className="text-slate-300 dark:text-slate-700">·</span>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300 inline-flex items-center gap-1.5">
-                Journey: <strong className="text-slate-900 dark:text-white">{origin.station_name}</strong>
-                <ArrowRight size={12} strokeWidth={1.75} className="text-slate-400" />
-                <strong className="text-slate-900 dark:text-white">{destination.station_name}</strong>
-              </span>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300 tabular-nums">
-            <Clock size={13} strokeWidth={1.75} />
-            <span>Travel Window: {formatTime(travelTime)}</span>
-          </div>
-        </div>
-
-        {/* Core Main Grid: Vertical 1px border dividing Origin and Destination */}
-        <div className="grid grid-cols-1 lg:grid-cols-12">
-          {/* LEFT COLUMN: Origin Station Data (7 cols) */}
-          <div className="lg:col-span-7 p-6 sm:p-8 lg:border-r border-slate-200 dark:border-slate-700/80 flex flex-col justify-between gap-6">
-            <div>
-              {/* Origin Station Title & Risk Badge */}
-              <div className="flex items-start justify-between gap-4 mb-6">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Origin Station
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    {origin.station_name}
-                  </h3>
-                </div>
-
-                {/* Status Badge */}
-                <div
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shrink-0"
-                  style={{
-                    backgroundColor: originRisk.bg,
-                    borderColor: originRisk.border,
-                    color: originRisk.color,
-                  }}
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Travel Advisory
+                </span>
+                <span
+                  className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${originStatus.lightBadge} ${originStatus.darkBadge}`}
                 >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: originRisk.color }}
-                  />
-                  <span>{originRisk.shortLabel} Risk</span>
-                </div>
+                  {originStatus.label}
+                </span>
               </div>
-
-              {/* Main Metric: Predicted Inflow (Tabular numbers) */}
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 mb-6">
-                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 mb-1">
-                  <span>PREDICTED PASSENGER INFLOW</span>
-                  <span className="tabular-nums font-mono text-slate-500 dark:text-slate-400">+{origin.horizon_minutes || 20}m horizon</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span
-                    className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums"
-                    style={{ color: originRisk.color }}
-                  >
-                    {formatNumber(origin.predicted_inflow)}
-                  </span>
-                  <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                    passengers entering / 10m
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
-                  {originRisk.description}
+              <p className="text-sm font-medium text-slate-900 dark:text-white leading-snug">
+                {advisory.message}
+              </p>
+              {advisory.gate_recommendation && (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Tip: {advisory.gate_recommendation}
                 </p>
-              </div>
-
-              {/* Horizon Projection: 10m, 20m, 30m */}
-              <div>
-                <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-3">
-                  <span>Inflow Horizon Breakdown</span>
-                  <span className="text-slate-500 dark:text-slate-400 font-normal">Next 30 mins</span>
-                </div>
-
-                {series ? (
-                  <div className="grid grid-cols-3 gap-3">
-                    {series.map((item) => {
-                      const itemRisk = getRiskConfig(item.risk);
-                      return (
-                        <div
-                          key={item.horizon}
-                          className="p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex flex-col gap-1"
-                        >
-                          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-                            <span>+{item.horizon}m</span>
-                            <span
-                              className="font-semibold text-[10px] uppercase"
-                              style={{ color: itemRisk.color }}
-                            >
-                              {itemRisk.shortLabel}
-                            </span>
-                          </div>
-                          <div className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-                            {formatNumber(item.inflow)}
-                          </div>
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400">entering</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 text-center">
-                    Horizon breakdown series unavailable for this station window.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Accessibility Data */}
-            <div className="pt-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-              <DoorOpen size={14} strokeWidth={1.75} className="shrink-0 text-slate-500" />
-              <span>
-                Station Infrastructure: {origin.gates || 6} gates · {origin.lifts || 2} lifts · {origin.platforms || 2} platforms
-              </span>
-            </div>
-          </div>
-
-          {/* RIGHT COLUMN: Destination Station & Smart Advisory (5 cols) */}
-          <div className="lg:col-span-5 p-6 sm:p-8 flex flex-col justify-between gap-6 bg-slate-50/40 dark:bg-slate-900/30">
-            <div>
-              {/* Destination Station Header */}
-              <div className="flex items-start justify-between gap-4 mb-6">
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
-                    Destination Station
-                  </span>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
-                    {destination.station_name}
-                  </h3>
-                </div>
-
-                {/* Status Badge */}
-                <div
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border shrink-0"
-                  style={{
-                    backgroundColor: destRisk.bg,
-                    borderColor: destRisk.border,
-                    color: destRisk.color,
-                  }}
-                >
-                  <span
-                    className="w-2 h-2 rounded-full"
-                    style={{ backgroundColor: destRisk.color }}
-                  />
-                  <span>{destRisk.shortLabel} Risk</span>
-                </div>
-              </div>
-
-              {/* Destination Arrival & Expected Inflow */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col gap-1">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Est. Arrival
-                  </span>
-                  <span className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-                    {formatTime(destination.forecast_time || '08:45')}
-                  </span>
-                </div>
-
-                <div className="p-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col gap-1">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                    Inflow at Arrival
-                  </span>
-                  <span className="text-lg font-bold text-slate-900 dark:text-white tabular-nums">
-                    {formatNumber(destination.predicted_inflow)} pax
-                  </span>
-                </div>
-              </div>
-
-              {/* Smart Travel Advisory Section */}
-              {advisory && (
-                <div className="p-4 rounded-xl border border-cyan-200 dark:border-cyan-800/80 bg-cyan-50/60 dark:bg-cyan-950/30">
-                  <div className="flex items-center gap-2 mb-2 text-cyan-800 dark:text-cyan-400 font-semibold text-xs tracking-wider uppercase">
-                    <Lightbulb size={15} strokeWidth={1.75} />
-                    <span>Smart Travel Advisory</span>
-                  </div>
-
-                  <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
-                    {advisory.message}
-                  </p>
-
-                  {advisory.gate_recommendation && (
-                    <div className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 mb-3 bg-white/80 dark:bg-slate-800 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <DoorOpen size={14} strokeWidth={1.75} className="text-cyan-600 dark:text-cyan-400 shrink-0" />
-                      <span>{advisory.gate_recommendation}</span>
-                    </div>
-                  )}
-
-                  {advisory.suggest_time_offset && onApplyOffset && (
-                    <button
-                      type="button"
-                      onClick={() => onApplyOffset(advisory.suggest_time_offset)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 text-xs font-semibold transition-colors duration-150 cursor-pointer shadow-xs"
-                    >
-                      <Clock size={13} strokeWidth={1.75} />
-                      <span>
-                        Check {advisory.later_time ? formatTime(advisory.later_time) : `+${advisory.suggest_time_offset} mins later`}
-                      </span>
-                      <ArrowRight size={13} strokeWidth={1.75} />
-                    </button>
-                  )}
-                </div>
               )}
             </div>
+          </div>
 
-            {/* Model Disclaimer & Info */}
-            <div className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed space-y-1">
-              <div>
-                {result?.meta?.disclaimer || 'Forecasts come from a model trained on SYNTHETIC data, not DMRC measurements.'}
+          {onApplyOffset && (
+            <button
+              type="button"
+              onClick={() => onApplyOffset(shiftOffset)}
+              className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 active:bg-slate-950 dark:bg-emerald-600 dark:hover:bg-emerald-700 transition-colors shrink-0 cursor-pointer shadow-xs"
+            >
+              <Clock size={15} strokeWidth={1.75} />
+              <span>Check Crowd for +{shiftOffset} mins</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* ── 2. ORIGIN & DESTINATION OVERVIEW (Flat Surface, 1px Divider) ────── */}
+      <div className="bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition-colors">
+        <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 dark:divide-slate-800">
+          
+          {/* Left Column: Boarding Station */}
+          <div className="p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Boarding Station
+                </span>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {origin?.station_name}
+                </h3>
               </div>
-              <div className="text-[10px] text-slate-400 dark:text-slate-500">
-                Inflow forecasts represent passenger entrance volume across turnstiles, not instantaneous platform headcounts.
+              <span
+                className={`px-2.5 py-1 rounded text-xs font-semibold border ${originStatus.lightBadge} ${originStatus.darkBadge}`}
+              >
+                {originStatus.label}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="space-y-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Expected Crowd (People)
+                </span>
+                <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+                  {origin?.predicted_inflow}{' '}
+                  <span className="text-xs font-normal text-slate-500 dark:text-slate-400">Passengers</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Departure Time
+                </span>
+                <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+                  {origin?.forecast_time || travelTime}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* BOTTOM METADATA BAR: Live Timestamp & Model MAE */}
-        <div className="px-6 py-3 border-t border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-300">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span className="tabular-nums">
-              Last updated: {formattedTime || 'Just now'} · MAE 4.08 on synthetic data
-            </span>
+            {/* Crowd Level Indicator Bar */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex justify-between text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                <span>Comfortable</span>
+                <span>Moderate Rush</span>
+                <span>Heavy Rush</span>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: `${Math.min(100, Math.max(15, ((origin?.predicted_inflow || 0) / 800) * 100))}%`,
+                    backgroundColor: originStatus.textColor,
+                  }}
+                ></div>
+              </div>
+            </div>
+
+            {/* 30-Min Inflow Steps */}
+            {origin?.horizon_series && (
+              <div className="space-y-2">
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Crowd Forecast for Next 30 Mins
+                </span>
+                <div className="grid grid-cols-3 divide-x divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-lg p-3 bg-slate-50/70 dark:bg-slate-900/40">
+                  {origin.horizon_series.map((h) => {
+                    const hStatus = getCrowdStatus(h.risk || h.risk_level);
+                    return (
+                      <div key={h.horizon} className="px-2 text-center space-y-1">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block">
+                          After {h.horizon} min
+                        </span>
+                        <span className="text-sm font-bold text-slate-900 dark:text-white block tabular-nums">
+                          {h.inflow || h.predicted_inflow}
+                        </span>
+                        <span
+                          className="text-[10px] font-semibold block"
+                          style={{ color: hStatus.textColor }}
+                        >
+                          {hStatus.label.split(' ')[0]}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+              <span>Ticket Gates: <strong className="text-slate-900 dark:text-white">{origin?.gates || 4}</strong></span>
+              <span>Platforms: <strong className="text-slate-900 dark:text-white">{origin?.platforms || 2}</strong></span>
+            </div>
           </div>
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-mono">
-            Delhi Metro Synthetic Inflow Engine v2.0
+
+          {/* Right Column: Destination Station */}
+          <div className="p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  Destination Station
+                </span>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {destination?.station_name}
+                </h3>
+              </div>
+              <span
+                className={`px-2.5 py-1 rounded text-xs font-semibold border ${destStatus.lightBadge} ${destStatus.darkBadge}`}
+              >
+                {destStatus.label}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+              <div className="space-y-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Expected Crowd (People)
+                </span>
+                <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+                  {destination?.predicted_inflow}{' '}
+                  <span className="text-xs font-normal text-slate-500 dark:text-slate-400">Passengers</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                  Estimated Arrival Time
+                </span>
+                <div className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums">
+                  {destination?.forecast_time}
+                </div>
+              </div>
+            </div>
+
+            {/* Arrival Expectation Info Box */}
+            <div className="p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+              <span className="font-semibold text-slate-900 dark:text-white block">
+                Arrival Transit Expectation
+              </span>
+              <p className="leading-relaxed">
+                Expected conditions at {destination?.station_name} around {destination?.forecast_time} are{' '}
+                <strong style={{ color: destStatus.textColor }}>
+                  {destStatus.label.toLowerCase()}
+                </strong>.
+              </p>
+            </div>
+
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+              <span>Line: <strong className="text-slate-900 dark:text-white">{destination?.line} Line</strong></span>
+              <span>Ticket Gates: <strong className="text-slate-900 dark:text-white">{destination?.gates || 4}</strong></span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Journey Timeline Progression */}
-      <JourneyTimeline route={route} />
+      {/* ── 3. ROUTE TIMELINE ────────────────────────────────────────────── */}
+      <JourneyTimeline origin={origin} destination={destination} route={result.route} />
     </div>
   );
 }

@@ -3180,10 +3180,10 @@ export const MODEL_METRICS = {
 };
 
 export const RISK_LEVELS = {
-  LOW: { label: 'Low', color: '#16a34a', bg: 'rgba(22,163,74,0.15)', border: 'rgba(22,163,74,0.35)', threshold: 150 },
-  MODERATE: { label: 'Moderate', color: '#d97706', bg: 'rgba(217,119,6,0.15)', border: 'rgba(217,119,6,0.35)', threshold: 350 },
-  HIGH: { label: 'High', color: '#dc2626', bg: 'rgba(220,38,38,0.15)', border: 'rgba(220,38,38,0.40)', threshold: 550 },
-  CRITICAL: { label: 'Critical', color: '#991b1b', bg: 'rgba(153,27,27,0.20)', border: 'rgba(153,27,27,0.50)', threshold: Infinity },
+  LOW: { label: 'Low', color: '#10B981', bg: 'rgba(16, 185, 129, 0.12)', border: 'rgba(16, 185, 129, 0.28)', threshold: 150 },
+  MODERATE: { label: 'Moderate', color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.12)', border: 'rgba(245, 158, 11, 0.28)', threshold: 350 },
+  HIGH: { label: 'High', color: '#F97316', bg: 'rgba(249, 115, 22, 0.12)', border: 'rgba(249, 115, 22, 0.28)', threshold: 550 },
+  CRITICAL: { label: 'Critical', color: '#EF4444', bg: 'rgba(239, 68, 68, 0.16)', border: 'rgba(239, 68, 68, 0.38)', threshold: Infinity },
 };
 
 export function getRiskFromInflow(inflow) {

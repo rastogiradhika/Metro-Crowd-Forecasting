@@ -1,15 +1,16 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser, logoutUser, fetchCurrentUser, DEMO_MODE } from '../services/api';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { loginUser, logoutUser, fetchCurrentUser } from '../services/api';
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [isOperatorLoggedIn, setIsOperatorLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const openLoginModal = () => setIsModalOpen(true);
-  const closeLoginModal = () => setIsModalOpen(false);
+  const openLoginModal = useCallback(() => setIsModalOpen(true), []);
+  const closeLoginModal = useCallback(() => setIsModalOpen(false), []);
 
   // Check existing session on load via HTTP-Only cookie verification (/auth/me)
   useEffect(() => {
@@ -19,30 +20,24 @@ export function AuthProvider({ children }) {
         if (user && (user.role === 'admin' || user.role === 'operator')) {
           setIsOperatorLoggedIn(true);
           setCurrentUser(user);
+        } else {
+          setIsOperatorLoggedIn(false);
+          setCurrentUser(null);
         }
       } catch {
         setIsOperatorLoggedIn(false);
         setCurrentUser(null);
+      } finally {
+        setAuthLoading(false);
       }
     }
 
-    if (!DEMO_MODE) {
-      verifySession();
-    } else {
-      // In Demo mode, check sessionStorage
-      try {
-        const stored = sessionStorage.getItem('metroai_operator_auth') === 'true';
-        setIsOperatorLoggedIn(stored);
-      } catch {
-        setIsOperatorLoggedIn(false);
-      }
-    }
+    verifySession();
 
-    // Listen for 401 Unauthorized signals from API requests
+    // Listen for 401 Unauthorized signals from API requests (resets auth state quietly without intrusive popup)
     const handleUnauthorized = () => {
       setIsOperatorLoggedIn(false);
       setCurrentUser(null);
-      openLoginModal();
     };
 
     window.addEventListener('metroai:unauthorized', handleUnauthorized);
@@ -51,38 +46,30 @@ export function AuthProvider({ children }) {
 
   const loginOperator = async (email, password) => {
     // 1. Client-side sanity checks
+    const emailTrim = (email || '').trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email.trim())) {
-      throw new Error('Please enter a valid official email address.');
+    if (!emailTrim || !emailRegex.test(emailTrim)) {
+      throw new Error('Please enter a valid official DMRC staff email address.');
     }
     if (!password || password.length < 6) {
       throw new Error('Password must be at least 6 characters.');
     }
 
-    // 2. Perform authentic backend handshake (sets HTTP-Only cookie)
-    const res = await loginUser(email, password);
-    setIsOperatorLoggedIn(true);
-    setCurrentUser(res.user || { email, role: 'admin' });
-
-    if (DEMO_MODE) {
-      try {
-        sessionStorage.setItem('metroai_operator_auth', 'true');
-      } catch {
-        // ignore storage errors
-      }
+    // 2. Perform authentic backend handshake (sets secure HTTP-Only cookie)
+    const res = await loginUser(emailTrim, password);
+    const userRole = res.user?.role || 'admin';
+    if (userRole !== 'admin' && userRole !== 'operator') {
+      throw new Error('Access restricted: Only authorized DMRC operations staff accounts can log in.');
     }
 
+    setIsOperatorLoggedIn(true);
+    setCurrentUser(res.user || { email: emailTrim, role: userRole });
     return res;
   };
 
   const logoutOperator = async () => {
     try {
       await logoutUser();
-    } catch {
-      // ignore
-    }
-    try {
-      sessionStorage.removeItem('metroai_operator_auth');
     } catch {
       // ignore
     }
@@ -95,6 +82,7 @@ export function AuthProvider({ children }) {
       value={{
         isOperatorLoggedIn,
         currentUser,
+        authLoading,
         isModalOpen,
         openLoginModal,
         closeLoginModal,

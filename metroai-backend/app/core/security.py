@@ -107,3 +107,22 @@ def get_current_admin(current_user = Depends(get_current_user)):
             detail="Administrative privileges required for operations center."
         )
     return current_user
+
+
+def require_role(required_role: str):
+    """
+    FastAPI dependency factory that enforces a strict user role.
+    Raises 403 Forbidden if the authenticated user's role does not match.
+    """
+    def role_checker(current_user = Depends(get_current_user)):
+        if current_user.role != required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied: '{required_role}' privileges required."
+            )
+        return current_user
+    return role_checker
+
+
+# Strict dependency: ONLY an admin can perform admin-only provisioning (Fix C3)
+require_superadmin = require_role("admin")

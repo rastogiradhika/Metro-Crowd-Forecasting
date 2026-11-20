@@ -3,37 +3,36 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [isDark, setIsDark] = useState(() => {
+  const [theme, setTheme] = useState(() => {
     try {
-      const stored = localStorage.getItem('metroai_theme');
-      if (stored !== null) return stored === 'dark';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const saved = localStorage.getItem('metroai-theme');
+      if (saved === 'light' || saved === 'dark') return saved;
+      return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
     } catch {
-      return false;
+      return 'dark';
     }
   });
 
   useEffect(() => {
     const root = document.documentElement;
-    const body = document.body;
-    if (isDark) {
+    if (theme === 'dark') {
       root.classList.add('dark');
-      body.classList.add('dark');
+      root.classList.remove('light');
     } else {
+      root.classList.add('light');
       root.classList.remove('dark');
-      body.classList.remove('dark');
     }
     try {
-      localStorage.setItem('metroai_theme', isDark ? 'dark' : 'light');
-    } catch {
-      // localStorage may fail in restricted/private modes
-    }
-  }, [isDark]);
+      localStorage.setItem('metroai-theme', theme);
+    } catch {}
+  }, [theme]);
 
-  const toggleTheme = () => setIsDark((prev) => !prev);
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, isDark: theme === 'dark', toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

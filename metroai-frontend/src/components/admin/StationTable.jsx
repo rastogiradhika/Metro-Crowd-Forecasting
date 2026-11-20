@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { Search, ArrowUpDown, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Eye } from 'lucide-react';
+﻿import React, { useState, useMemo } from 'react';
+import { Search, ArrowUpDown, TrendingUp, TrendingDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getRiskConfig } from '../../utils/risk';
 import { formatNumber } from '../../utils/formatters';
 import { LINE_COLORS } from '../../data/stations';
@@ -72,9 +72,9 @@ export default function StationTable({
   }
 
   return (
-    <div className="w-full bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm overflow-hidden transition-colors duration-200">
+    <div className="w-full bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden transition-colors">
       {/* Table Toolbar */}
-      <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <label htmlFor="station-search" className="sr-only">
@@ -84,7 +84,7 @@ export default function StationTable({
           <input
             id="station-search"
             type="text"
-            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
+            className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-colors"
             placeholder="Search stations or metro line..."
             value={search}
             onChange={(e) => {
@@ -95,27 +95,27 @@ export default function StationTable({
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-2">
-          {/* Risk Filter */}
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+          {/* Crowd Level Filter */}
           <select
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium focus:outline-none focus:border-cyan-500 cursor-pointer"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-medium focus:outline-none focus:border-emerald-600 cursor-pointer"
             value={riskFilter}
-            aria-label="Filter by risk level"
+            aria-label="Filter by crowd level"
             onChange={(e) => {
               setRiskFilter(e.target.value);
               setPage(1);
             }}
           >
-            <option value="ALL">All Risk Levels</option>
-            <option value="CRITICAL">Critical Only</option>
-            <option value="HIGH">High Only</option>
-            <option value="MODERATE">Moderate Only</option>
-            <option value="LOW">Low Only</option>
+            <option value="ALL">All Crowd Levels</option>
+            <option value="CRITICAL">Extreme Rush Only</option>
+            <option value="HIGH">Heavy Rush Only</option>
+            <option value="MODERATE">Normal Rush Only</option>
+            <option value="LOW">Low Rush Only</option>
           </select>
 
           {/* Line Filter */}
           <select
-            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-medium focus:outline-none focus:border-cyan-500 cursor-pointer"
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 text-xs font-medium focus:outline-none focus:border-emerald-600 cursor-pointer"
             value={lineFilter}
             aria-label="Filter by metro line"
             onChange={(e) => {
@@ -133,25 +133,25 @@ export default function StationTable({
 
       {/* Table Container */}
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm border-collapse">
+        <table className="w-full text-left text-xs border-collapse">
           <thead>
-            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase tracking-wider">
+            <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/60 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               <th
                 onClick={() => handleSort('station_name')}
                 className="py-3 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
                   <span>Station</span>
                   <ArrowUpDown size={12} strokeWidth={1.75} />
                 </div>
               </th>
-              <th className="py-3 px-4">Line</th>
+              <th className="py-3 px-3 sm:px-4 hidden sm:table-cell">Line</th>
               <th
                 onClick={() => handleSort('predicted_inflow')}
                 className="py-3 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <span>Predicted Inflow</span>
+                <div className="flex items-center gap-1.5">
+                  <span>Expected Crowd</span>
                   <ArrowUpDown size={12} strokeWidth={1.75} />
                 </div>
               </th>
@@ -159,17 +159,17 @@ export default function StationTable({
                 onClick={() => handleSort('risk_level')}
                 className="py-3 px-4 cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                <div className="flex items-center gap-2">
-                  <span>Risk Level</span>
+                <div className="flex items-center gap-1.5">
+                  <span>Crowd Level</span>
                   <ArrowUpDown size={12} strokeWidth={1.75} />
                 </div>
               </th>
-              <th className="py-3 px-4">Horizon</th>
-              <th className="py-3 px-4">Trend</th>
+              <th className="py-3 px-3 sm:px-4 hidden md:table-cell">Forecast Time</th>
+              <th className="py-3 px-3 sm:px-4 hidden lg:table-cell">Crowd Trend</th>
               <th className="py-3 px-4 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
             {paginated.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-slate-500 dark:text-slate-400 text-xs">
@@ -193,16 +193,16 @@ export default function StationTable({
                         onSelectStation(row.station_id);
                       }
                     }}
-                    className={`cursor-pointer transition-colors duration-100 focus:outline-none focus:bg-cyan-50/50 dark:focus:bg-cyan-950/20 ${
+                    className={`cursor-pointer transition-colors duration-100 focus:outline-none ${
                       isSelected
-                        ? 'bg-cyan-50/60 dark:bg-cyan-950/30'
+                        ? 'bg-slate-100 dark:bg-slate-800/80'
                         : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'
                     }`}
                   >
                     {/* Station Name */}
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: lineCol }} />
+                      <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: lineCol }} />
                         <span className="font-semibold text-slate-900 dark:text-white">
                           {row.station_name}
                         </span>
@@ -212,7 +212,7 @@ export default function StationTable({
                     {/* Line */}
                     <td className="py-3 px-4">
                       <span
-                        className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider"
+                        className="px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider"
                         style={{
                           backgroundColor: `${lineCol}15`,
                           color: lineCol,
@@ -222,41 +222,41 @@ export default function StationTable({
                       </span>
                     </td>
 
-                    {/* Predicted Inflow */}
+                    {/* Expected Crowd */}
                     <td className="py-3 px-4">
                       <div className="flex items-baseline gap-1">
                         <span
-                          className="font-bold tabular-nums text-base"
+                          className="font-bold tabular-nums text-sm sm:text-base"
                           style={{ color: risk.color }}
                         >
                           {formatNumber(row.predicted_inflow)}
                         </span>
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">pax</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">people</span>
                       </div>
                     </td>
 
-                    {/* Risk Level */}
+                    {/* Crowd Level */}
                     <td className="py-3 px-4">
                       <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border"
+                        className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider border"
                         style={{
                           backgroundColor: risk.bg,
                           borderColor: risk.border,
                           color: risk.color,
                         }}
                       >
-                        {risk.shortLabel}
+                        {risk.label || risk.shortLabel}
                       </span>
                     </td>
 
-                    {/* Horizon */}
+                    {/* Forecast Time */}
                     <td className="py-3 px-4">
-                      <span className="text-xs font-mono text-slate-600 dark:text-slate-300">
-                        +{row.horizon_minutes}m
+                      <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+                        Next {row.horizon_minutes} mins
                       </span>
                     </td>
 
-                    {/* Trend */}
+                    {/* Crowd Trend */}
                     <td className="py-3 px-4">
                       {row.trend === 'UP' ? (
                         <span className="inline-flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
@@ -273,15 +273,13 @@ export default function StationTable({
                     <td className="py-3 px-4 text-right">
                       <button
                         type="button"
-                        aria-label={`Inspect ${row.station_name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onSelectStation(row.station_id);
                         }}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        className="px-2.5 py-1 rounded text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer"
                       >
-                        <Eye size={13} strokeWidth={1.75} />
-                        <span>Inspect</span>
+                        Inspect
                       </button>
                     </td>
                   </tr>
@@ -292,31 +290,32 @@ export default function StationTable({
         </table>
       </div>
 
-      {/* Pagination Bar */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600 dark:text-slate-300">
+      {/* Pagination Footer */}
+      <div className="p-3.5 sm:p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
         <span className="tabular-nums">
-          Showing <strong>{(page - 1) * pageSize + 1}</strong> to <strong>{Math.min(page * pageSize, filtered.length)}</strong> of <strong>{filtered.length}</strong> stations
+          Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1} to{' '}
+          {Math.min(page * pageSize, filtered.length)} of {filtered.length} stations
         </span>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             type="button"
             disabled={page === 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Previous page"
-            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <ChevronLeft size={14} strokeWidth={1.75} />
           </button>
-          <span className="tabular-nums px-2">
-            Page {page} of {totalPages}
+          <span className="px-2 font-mono font-medium tabular-nums">
+            {page} / {totalPages}
           </span>
           <button
             type="button"
-            disabled={page >= totalPages}
+            disabled={page === totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 disabled:opacity-40 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Next page"
-            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
             <ChevronRight size={14} strokeWidth={1.75} />
           </button>

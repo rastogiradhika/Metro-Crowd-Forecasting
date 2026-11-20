@@ -1,56 +1,64 @@
-// ============================================================
-// METROAI — Risk Utilities
-// Single source of truth for risk display logic
+﻿// ============================================================
+// METROAI — Risk Utilities & Semantic Scale
+// Enterprise SaaS Palette: Emerald / Amber / Orange / Red
 // ============================================================
 
 export const RISK_CONFIG = {
   LOW: {
     label: 'Low',
     shortLabel: 'LOW',
-    color: '#16a34a',
-    bg: 'rgba(22,163,74,0.15)',
-    border: 'rgba(22,163,74,0.35)',
+    color: '#059669',
+    bg: 'rgba(5, 150, 105, 0.10)',
+    border: 'rgba(5, 150, 105, 0.20)',
     pulse: 'none',
     icon: 'CheckCircle2',
-    description: 'Comfortable travel expected',
+    description: 'Comfortable transit & minimal turnstile queue',
   },
   MODERATE: {
     label: 'Moderate',
     shortLabel: 'MODERATE',
-    color: '#d97706',
-    bg: 'rgba(217,119,6,0.15)',
-    border: 'rgba(217,119,6,0.35)',
+    color: '#D97706',
+    bg: 'rgba(217, 119, 6, 0.10)',
+    border: 'rgba(217, 119, 6, 0.20)',
     pulse: 'none',
     icon: 'AlertTriangle',
-    description: 'Some crowding expected',
+    description: 'Active commuter building flow',
   },
   HIGH: {
     label: 'High',
     shortLabel: 'HIGH',
-    color: '#dc2626',
-    bg: 'rgba(220,38,38,0.15)',
-    border: 'rgba(220,38,38,0.40)',
-    pulse: 'pulse-high',
+    color: '#EA580C',
+    bg: 'rgba(234, 88, 12, 0.10)',
+    border: 'rgba(234, 88, 12, 0.20)',
+    pulse: 'none',
     icon: 'ShieldAlert',
-    description: 'High passenger pressure expected',
+    description: 'Heavy entrance pressure & concourse bottlenecks',
   },
   CRITICAL: {
     label: 'Critical',
     shortLabel: 'CRITICAL',
-    color: '#991b1b',
-    bg: 'rgba(153,27,27,0.20)',
-    border: 'rgba(153,27,27,0.50)',
+    color: '#DC2626',
+    bg: 'rgba(220, 38, 38, 0.10)',
+    border: 'rgba(220, 38, 38, 0.20)',
     pulse: 'pulse-critical',
     icon: 'AlertOctagon',
-    description: 'Very high passenger pressure expected',
+    description: 'Surge containment & extreme turnstile saturation',
   },
 };
 
 export function getRiskConfig(level) {
-  return RISK_CONFIG[level] || RISK_CONFIG.LOW;
+  const normalized = (level || 'LOW').toUpperCase();
+  return RISK_CONFIG[normalized] || RISK_CONFIG.LOW;
 }
 
-export function classifyRisk(inflow) {
+export function classifyRisk(inflow, stationId = null) {
+  const hubs = [8, 13, 16, 37, 40, 45, 50, 59, 61, 70, 75, 120];
+  if (stationId && hubs.includes(stationId)) {
+    if (inflow < 400) return 'LOW';
+    if (inflow < 850) return 'MODERATE';
+    if (inflow < 1150) return 'HIGH';
+    return 'CRITICAL';
+  }
   if (inflow < 150) return 'LOW';
   if (inflow < 350) return 'MODERATE';
   if (inflow < 550) return 'HIGH';

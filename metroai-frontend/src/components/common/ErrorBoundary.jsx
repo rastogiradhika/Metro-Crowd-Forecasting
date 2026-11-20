@@ -23,9 +23,9 @@ export default class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-[#F4F5F8] dark:bg-[#0F172A] px-4 py-16">
-          <div className="w-full max-w-md p-6 sm:p-8 rounded-2xl border border-red-200 dark:border-red-900/60 bg-white dark:bg-[#1E293B] shadow-lg text-center flex flex-col items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 flex items-center justify-center">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#090D11] px-4 py-16">
+          <div className="w-full max-w-md p-6 sm:p-8 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-slate-900 shadow-lg text-center flex flex-col items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 flex items-center justify-center">
               <AlertCircle size={24} strokeWidth={1.75} />
             </div>
             <div>
@@ -39,7 +39,7 @@ export default class ErrorBoundary extends React.Component {
             <button
               type="button"
               onClick={this.handleReset}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0F172A] hover:bg-slate-800 dark:bg-cyan-600 dark:hover:bg-cyan-500 text-white text-xs font-semibold transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-emerald-600 dark:hover:bg-emerald-700 text-white text-xs font-semibold transition-colors cursor-pointer"
             >
               <RefreshCw size={14} strokeWidth={1.75} />
               <span>Reload Application</span>

@@ -21,16 +21,17 @@ from app.ml.ml_service import ml_service
 
 router = APIRouter(prefix="/api", tags=["Passenger Forecasts"])
 
-TIME_FORMAT_REGEX = re.compile(r"^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$")
+TIME_24H_REGEX = re.compile(r"^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$")
+TIME_12H_REGEX = re.compile(r"^(0?[1-9]|1[0-2]):([0-5][0-9])\s?([AaPp][Mm])$")
 IST = ZoneInfo("Asia/Kolkata")
 
 
 def parse_travel_time(s: str) -> datetime:
     """
     Parses and validates time string to a full timezone-aware datetime in IST.
-    Supports ISO formats ('2026-11-21T16:20:00Z') preserving calendar dates,
-    and 24-hr time strings ('08:15', '16:20').
-    Rejects invalid/malformed values (such as '99:99' or non-time strings) with 400 Bad Request.
+    Supports ISO formats ('2026-11-21T16:20:00Z'), 24-hr ('08:15', '20:15'),
+    and 12-hr with AM/PM ('08:15 PM', '8:15 am').
+    Rejects invalid/malformed values (such as '99:99', '08:15 XM') with 400 Bad Request.
     """
     if not s or not isinstance(s, str):
         raise HTTPException(
@@ -38,9 +39,11 @@ def parse_travel_time(s: str) -> datetime:
             detail="Invalid time format. Please provide HH:MM."
         )
 
-    if "T" in s:
+    time_str = s.strip()
+
+    if "T" in time_str:
         try:
-            dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
+            dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
             return dt.astimezone(IST) if dt.tzinfo else dt.replace(tzinfo=IST)
         except (ValueError, Exception):
             raise HTTPException(
@@ -48,17 +51,29 @@ def parse_travel_time(s: str) -> datetime:
                 detail="Invalid time format. Please provide HH:MM."
             )
 
-    cleaned = s.replace("AM", "").replace("PM", "").replace("am", "").replace("pm", "").strip()
-    match = TIME_FORMAT_REGEX.match(cleaned)
-    if not match:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid time format. Please provide HH:MM."
-        )
+    match_24 = TIME_24H_REGEX.match(time_str)
+    if match_24:
+        hour = int(match_24.group(1))
+        minute = int(match_24.group(2))
+    else:
+        match_12 = TIME_12H_REGEX.match(time_str)
+        if match_12:
+            raw_hour = int(match_12.group(1))
+            minute = int(match_12.group(2))
+            meridiem = match_12.group(3).upper()
+            if meridiem == "AM":
+                hour = 0 if raw_hour == 12 else raw_hour
+            else:
+                hour = 12 if raw_hour == 12 else raw_hour + 12
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid time format. Please provide HH:MM (24h) or HH:MM AM/PM."
+            )
 
     return datetime.now(IST).replace(
-        hour=int(match.group(1)),
-        minute=int(match.group(2)),
+        hour=hour,
+        minute=minute,
         second=0,
         microsecond=0
     )
@@ -82,7 +97,7 @@ def get_station_forecast(
     Takes station_id and travel time, calls the pre-trained XGBoost ML service,
     and returns passenger crowd forecasts across horizons (+10m, +20m, +30m).
     """
-    station = db.query(Station).filter((Station.station_id == station_id) | (Station.id == station_id)).first()
+    station = db.query(Station).filter(Station.station_id == station_id).first()
     if not station:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -131,8 +146,8 @@ def compute_journey_forecast(
             detail="Origin and destination stations cannot be identical."
         )
 
-    origin = db.query(Station).filter((Station.station_id == payload.origin_id) | (Station.id == payload.origin_id)).first()
-    dest = db.query(Station).filter((Station.station_id == payload.destination_id) | (Station.id == payload.destination_id)).first()
+    origin = db.query(Station).filter(Station.station_id == payload.origin_id).first()
+    dest = db.query(Station).filter(Station.station_id == payload.destination_id).first()
 
     if not origin or not dest:
         raise HTTPException(
@@ -156,21 +171,46 @@ def compute_journey_forecast(
         intermediate=[]
     )
 
-    # 4. Generate Smart Advisory
-    if origin_pred["risk_level"] in ["HIGH", "CRITICAL"]:
-        later_when = when + timedelta(minutes=25)
+    # 4. Generate Smart Advisory with proper Risk Ranking (Fix I5)
+    RISK_RANK = {"LOW": 0, "MODERATE": 1, "HIGH": 2, "CRITICAL": 3}
+    origin_risk = origin_pred["risk_level"]
+
+    # Only suggest time shift if current risk is HIGH or CRITICAL
+    if RISK_RANK.get(origin_risk, 0) >= RISK_RANK["HIGH"]:
+        series = origin_pred.get("horizon_series", [])
+        if series:
+            # Pick the horizon (10m, 20m, 30m) with the lowest inflow
+            best_entry = min(series, key=lambda x: x["inflow"])
+            best_offset = best_entry["horizon"]
+            later_when = when + timedelta(minutes=best_offset)
+            advisory = TravelAdvisory(
+                level=origin_risk,
+                message=f"Heavy crowd expected at {origin.name}. Boarding +{best_offset} mins later has significantly lower crowd (~{best_entry['inflow']} people).",
+                gate_recommendation=None,
+                suggest_time_offset=best_offset,
+                later_time=f"{later_when.hour:02d}:{later_when.minute:02d}"
+            )
+        else:
+            advisory = TravelAdvisory(
+                level=origin_risk,
+                message=f"High passenger crowd expected at {origin.name}. Allow extra time for platform boarding.",
+                gate_recommendation=None,
+                suggest_time_offset=None,
+                later_time=None
+            )
+    elif origin_risk == "MODERATE":
         advisory = TravelAdvisory(
-            level=origin_pred["risk_level"],
-            message=f"High passenger inflow expected at {origin.name}. Concourse queue times may exceed 10 minutes.",
-            gate_recommendation=f"Use Gate {origin.gates} for faster security check clearance.",
-            suggest_time_offset=25,
-            later_time=f"{later_when.hour:02d}:{later_when.minute:02d}"
+            level="MODERATE",
+            message=f"Moderate crowd expected at {origin.name}. Steady commuter flow across ticket halls and platforms.",
+            gate_recommendation=None,
+            suggest_time_offset=None,
+            later_time=None
         )
     else:
         advisory = TravelAdvisory(
             level="LOW",
-            message=f"Comfortable travel conditions expected at {origin.name}. Smooth transit flow across turnstiles.",
-            gate_recommendation=f"Gates 1 through {origin.gates} open with minimal wait.",
+            message=f"Comfortable travel conditions expected at {origin.name}. Minimal queues and smooth boarding.",
+            gate_recommendation=None,
             suggest_time_offset=None,
             later_time=None
         )

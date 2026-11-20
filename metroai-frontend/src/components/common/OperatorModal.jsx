@@ -1,271 +1,169 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, Shield, Mail, Lock, User, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { X, Shield, Lock, Mail, AlertCircle, ArrowRight, ExternalLink, KeyRound } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function OperatorModal() {
   const { isModalOpen, closeLoginModal, loginOperator } = useAuth();
   const navigate = useNavigate();
-
-  const [tab, setTab] = useState('login'); // 'login' | 'register'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [operatorId, setOperatorId] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-
-  // Reset form when modal opens/closes
-  useEffect(() => {
-    if (isModalOpen) {
-      setEmail('');
-      setPassword('');
-      setOperatorId('');
-      setError(null);
-      setSuccess(false);
-      setLoading(false);
-    }
-  }, [isModalOpen]);
+  const [error, setError] = useState('');
 
   // Close on Escape key
   useEffect(() => {
-    function handleKeyDown(e) {
+    const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isModalOpen) {
         closeLoginModal();
       }
-    }
+    };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeLoginModal]);
 
   if (!isModalOpen) return null;
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isFormValid = emailRegex.test(email.trim()) && password.length >= 6;
-
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
-
-    if (!emailRegex.test(email.trim())) {
-      setError('Please provide a valid official email address.');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
-      return;
-    }
-
     setLoading(true);
+    setError('');
     try {
       await loginOperator(email, password);
-      setSuccess(true);
-      setTimeout(() => {
-        closeLoginModal();
-        navigate('/admin');
-      }, 500);
+      closeLoginModal();
+      navigate('/admin');
     } catch (err) {
       setError(err.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const handleFillDemo = () => {
+    setEmail('admin@delhimetrorail.com');
+    setPassword('admin123');
+    setError('');
+  };
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-200"
-      onClick={closeLoginModal}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-xs animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
     >
-      <div
-        className="relative w-full max-w-md bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl p-6 sm:p-8 transition-all duration-200"
-        onClick={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="operator-modal-title"
-      >
+      <div className="relative w-full max-w-md p-6 sm:p-8 rounded-xl bg-white dark:bg-[#0F172A] border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
         {/* Close Button */}
         <button
           type="button"
           onClick={closeLoginModal}
-          className="absolute top-5 right-5 p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors duration-150 cursor-pointer"
-          aria-label="Close dialog"
+          aria-label="Close login dialog"
+          className="absolute top-5 right-5 p-1.5 rounded-lg text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <X size={18} strokeWidth={1.75} />
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-[#0F172A] dark:bg-slate-800 text-white flex items-center justify-center border border-slate-700 shrink-0">
-            <Shield size={20} strokeWidth={1.75} className="text-cyan-400" />
+        <div className="space-y-2">
+          <div className="w-10 h-10 rounded-lg bg-slate-900 text-white dark:bg-slate-800 dark:text-emerald-400 flex items-center justify-center shadow-xs border border-slate-200 dark:border-slate-700">
+            <Shield size={20} strokeWidth={1.75} />
           </div>
-          <div>
-            <h3
-              id="operator-modal-title"
-              className="text-lg font-bold text-slate-900 dark:text-white tracking-tight"
-            >
-              Operator Control Portal
-            </h3>
-            <p className="text-xs text-slate-600 dark:text-slate-300">
-              DMRC Operations & Passenger Inflow Dispatch
-            </p>
-          </div>
-        </div>
-
-        {/* Login / Register Tab Toggle */}
-        <div className="flex items-center p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 mb-6">
-          <button
-            type="button"
-            onClick={() => {
-              setTab('login');
-              setError(null);
-            }}
-            className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-              tab === 'login'
-                ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            Operator Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setTab('register');
-              setError(null);
-            }}
-            className={`flex-1 py-2 text-xs font-semibold rounded-md transition-all duration-150 cursor-pointer ${
-              tab === 'register'
-                ? 'bg-white dark:bg-[#1E293B] text-slate-900 dark:text-white shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-            }`}
-          >
-            Register Station Head
-          </button>
+          <h3 id="modal-title" className="text-xl font-bold font-display text-slate-900 dark:text-white tracking-tight">
+            DMRC Operations Login
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            Restricted to verified Delhi Metro Rail Corporation (DMRC) staff, dispatchers, and network controllers.
+          </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-4 p-3 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 text-xs flex items-center gap-2">
-            <AlertCircle size={15} strokeWidth={1.75} className="shrink-0" />
+          <div className="p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/60 rounded-lg text-red-700 dark:text-red-300 text-xs flex items-center gap-2">
+            <AlertCircle size={15} strokeWidth={1.75} className="text-red-600 dark:text-red-400 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Success State */}
-        {success ? (
-          <div className="py-8 flex flex-col items-center justify-center text-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle2 size={24} strokeWidth={2} />
-            </div>
-            <div>
-              <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                Authorization Verified
-              </h4>
-              <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
-                Redirecting to Network Operations Center...
-              </p>
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+              Official Staff Email
+            </label>
+            <div className="relative">
+              <Mail size={15} strokeWidth={1.75} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@delhimetrorail.com"
+                required
+                autoComplete="email"
+                className="w-full pl-10 pr-3.5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-colors"
+              />
             </div>
           </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {/* If Register: Operator notice */}
-            {tab === 'register' && (
-              <div className="p-3.5 rounded-xl border border-cyan-200 dark:border-cyan-800 bg-cyan-50/60 dark:bg-cyan-950/30 text-xs text-slate-700 dark:text-slate-300">
-                <p className="font-semibold text-cyan-800 dark:text-cyan-400 mb-1">Official Staff Provisioning Policy</p>
-                <p className="mb-2 leading-relaxed">
-                  Operator and Station Head accounts are restricted to DMRC personnel and must be provisioned by an active Admin via the protected <code>/auth/operators</code> endpoint.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEmail('admin@delhimetrorail.com');
-                    setPassword('admin123');
-                    setTab('login');
-                    setError(null);
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-cyan-600 text-white font-semibold text-xs hover:bg-cyan-500 transition-colors cursor-pointer"
-                >
-                  <span>Auto-fill Admin Credentials</span>
-                </button>
-              </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 block">
+              Staff Password
+            </label>
+            <div className="relative">
+              <Lock size={15} strokeWidth={1.75} className="absolute left-3.5 top-3 text-slate-400" />
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                required
+                autoComplete="current-password"
+                className="w-full pl-10 pr-3.5 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs font-medium focus:outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-600 transition-colors"
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2.5 px-4 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+          >
+            {loading ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                <span>Authenticating DMRC Credentials...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Network Operations</span>
+                <ArrowRight size={14} strokeWidth={1.75} />
+              </>
             )}
+          </button>
+        </form>
 
-            {/* Email Field - Empty with placeholder */}
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="operator-email"
-                className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider"
-              >
-                Official Email
-              </label>
-              <div className="relative">
-                <Mail size={15} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  id="operator-email"
-                  type="email"
-                  required
-                  placeholder="operator@delhimetrorail.com"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
-                />
-              </div>
-            </div>
+        {/* Demo Fill Helper Button */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+          <button
+            type="button"
+            onClick={handleFillDemo}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+          >
+            <KeyRound size={13} strokeWidth={1.75} />
+            <span>Fill Staff Demo Login</span>
+          </button>
 
-            {/* Password Field - Masked type="password" */}
-            <div className="flex flex-col gap-1">
-              <label
-                htmlFor="operator-password"
-                className="text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider"
-              >
-                Password (min 6 characters)
-              </label>
-              <div className="relative">
-                <Lock size={15} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  id="operator-password"
-                  type="password"
-                  required
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  className="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Submit Button with Loading State & Validation check */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading || !isFormValid}
-                className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-[#0F172A] hover:bg-slate-800 dark:bg-cyan-600 dark:hover:bg-cyan-500 text-white font-semibold text-sm transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-xs"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 size={16} strokeWidth={1.75} className="animate-spin" />
-                    <span>Verifying Credentials...</span>
-                  </>
-                ) : (
-                  <span>{tab === 'login' ? 'Authenticate & Enter' : 'Register Operator'}</span>
-                )}
-              </button>
-            </div>
-
-            <div className="text-center pt-1">
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                Authorized DMRC personnel access only.
-              </span>
-            </div>
-          </form>
-        )}
+          <button
+            type="button"
+            onClick={() => {
+              closeLoginModal();
+              navigate('/login');
+            }}
+            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white cursor-pointer"
+          >
+            <span>Full screen page</span>
+            <ExternalLink size={12} strokeWidth={1.75} />
+          </button>
+        </div>
       </div>
     </div>
   );

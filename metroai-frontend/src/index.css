@@ -1,53 +1,57 @@
 @import "tailwindcss";
+@import "./styles/variables.css";
+@import "./styles/global.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-@layer base {
-  :root {
-    --color-bg-light: #F4F5F8;
-    --color-navy: #0F172A;
-    --color-card-dark: #1E293B;
-    --color-cyan: #06B6D4;
-  }
+@theme {
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--text);
+  --color-fg-muted: var(--text-muted);
+}
 
+@layer base {
   html {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    scroll-behavior: smooth;
-    -webkit-font-smoothing: antialiased;
+    font-family: var(--font-body);
   }
 
   html.dark, html.dark body {
-    background-color: #0F172A;
-    color: #F8FAFC;
+    background-color: var(--bg);
+    color: var(--text);
   }
 
-  /* Tabular numbers for clean numeric layout (tnum) */
-  .tabular-nums, input, table, .num-display {
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
+  html.light, html:not(.dark), html:not(.dark) body {
+    background-color: var(--bg);
+    color: var(--text);
   }
-}
 
-/* Continuous, seamless infinite looping train animation across the track (NEVER STOPS) */
-@keyframes trainContinuousRail {
-  0% {
-    left: -170px;
-  }
-  100% {
-    left: calc(100% + 20px);
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: var(--font-display);
   }
 }
 
-.train-continuous-rail {
-  position: absolute;
-  bottom: 12px;
-  animation: trainContinuousRail 6s linear infinite;
-  will-change: left;
-}
-
-/* Fast 150-250ms ease-out transitions */
-.transition-saas {
-  transition-property: color, background-color, border-color, transform, opacity;
-  transition-duration: 200ms;
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+@layer utilities {
+  .bg-surface {
+    background-color: var(--surface);
+  }
+  .bg-surface-2 {
+    background-color: var(--surface-2);
+  }
+  .border-border {
+    border-color: var(--border);
+  }
+  .border-border-active {
+    border-color: var(--border-active);
+  }
+  .text-fg {
+    color: var(--text);
+  }
+  .text-fg-secondary {
+    color: var(--text-secondary);
+  }
+  .text-fg-muted {
+    color: var(--text-muted);
+  }
 }

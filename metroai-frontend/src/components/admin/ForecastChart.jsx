@@ -20,7 +20,7 @@ export default function ForecastChart({ series = [], hourlyCurve = [] }) {
         inflow: item.inflow,
       }))
     : series.map((item) => ({
-        name: `+${item.horizon_minutes ?? item.horizon}m`,
+        name: `Next ${item.horizon_minutes ?? item.horizon}m`,
         inflow: item.predicted_inflow ?? item.inflow,
         risk: item.risk_level ?? item.risk,
       }));
@@ -41,12 +41,12 @@ export default function ForecastChart({ series = [], hourlyCurve = [] }) {
           <div className="font-semibold text-slate-900 dark:text-white mb-1">
             {label} Window
           </div>
-          <div className="text-cyan-600 dark:text-cyan-400 font-bold tabular-nums">
-            {p.inflow} passengers entering
+          <div className="text-emerald-600 dark:text-emerald-400 font-bold tabular-nums">
+            {p.inflow} people entering
           </div>
           {p.risk && (
             <div className="text-[10px] text-slate-400 mt-0.5">
-              Risk Category: {p.risk}
+              Crowd Level: {p.risk}
             </div>
           )}
         </div>
@@ -56,14 +56,14 @@ export default function ForecastChart({ series = [], hourlyCurve = [] }) {
   };
 
   return (
-    <div className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1E293B]">
+    <div className="w-full p-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <h4 className="text-sm font-bold text-slate-900 dark:text-white">
-            Passenger Inflow Curve
+            Crowd Flow Trend
           </h4>
-          <span className="text-xs text-slate-400">
-            {chartMode === 'hourly' ? 'Morning peak time-series trend' : '10m / 20m / 30m horizon curve'}
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {chartMode === 'hourly' ? 'Morning peak time-series trend' : 'Next 10m / 20m / 30m crowd timeline'}
           </span>
         </div>
 
@@ -89,7 +89,7 @@ export default function ForecastChart({ series = [], hourlyCurve = [] }) {
               }`}
               onClick={() => setChartMode('horizon')}
             >
-              Horizons
+              Next 10/20/30 min
             </button>
           </div>
         )}
@@ -117,7 +117,7 @@ export default function ForecastChart({ series = [], hourlyCurve = [] }) {
               dataKey="inflow"
               stroke="#06B6D4"
               strokeWidth={2.5}
-              dot={{ r: 3.5, fill: '#0F172A', stroke: '#06B6D4', strokeWidth: 2 }}
+              dot={{ r: 3.5, fill: '#0B100E', stroke: '#06B6D4', strokeWidth: 2 }}
               activeDot={{ r: 5, fill: '#06B6D4' }}
             />
           </LineChart>
