@@ -145,7 +145,7 @@ def login(user_in: UserLogin, request: Request, response: Response, db: Session 
         value=access_token,
         httponly=True,
         secure=is_production,       # True in production (HTTPS required)
-        samesite="lax",
+        samesite="none" if is_production else "lax",  # "none" allows cross-origin cookies between Vercel and Render
         path="/",
         max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
@@ -165,7 +165,7 @@ def logout(response: Response):
         path="/",
         httponly=True,
         secure=is_production,
-        samesite="lax",
+        samesite="none" if is_production else "lax",
     )
     return {"message": "Logged out successfully."}
 
