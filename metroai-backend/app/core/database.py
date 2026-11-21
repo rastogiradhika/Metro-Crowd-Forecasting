@@ -19,9 +19,12 @@ if not db_url:
     db_url = f"sqlite:///{DEFAULT_DB_PATH}"
     settings.DATABASE_URL = db_url
 
-# Normalize legacy postgres:// scheme to postgresql:// for SQLAlchemy compatibility (e.g. on Render)
+# Normalize legacy postgres:// and postgresql:// schemes for SQLAlchemy compatibility
 if db_url.startswith("postgres://"):
-    db_url = db_url.replace("postgres://", "postgresql://", 1)
+    db_url = db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    settings.DATABASE_URL = db_url
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
     settings.DATABASE_URL = db_url
 
 # Configure engine parameters for SQLite (local) vs PostgreSQL (production)
