@@ -50,6 +50,7 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5175",
             "http://localhost:3000",
             "https://metroai.vercel.app",
+            "https://metroai-frontend.vercel.app",
         ]
     )
 

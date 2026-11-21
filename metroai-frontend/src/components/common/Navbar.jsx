@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Shield, Menu, X, User, LogOut } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
@@ -18,7 +18,7 @@ export default function Navbar() {
     let active = true;
     async function checkHealth() {
       try {
-        const apiBase = import.meta.env.VITE_API_BASE_URL ?? '';
+        const apiBase = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
         const res = await fetch(`${apiBase}/health`, { method: 'GET' });
         if (res.ok) {
           if (active) setBackendStatus('READY');

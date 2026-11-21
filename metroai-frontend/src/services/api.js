@@ -5,7 +5,7 @@
 // Falls back to mock service when unavailable.
 // ============================================================
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
 export const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 function getUserSafeError(status) {
